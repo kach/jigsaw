@@ -17,7 +17,7 @@ kid on a bicycle.
 datatype step = m12 | m2 | m4 | m6 | m8 | m10
 type path = step list
 
-datatype move = l | ll | r | rr | pu | pd | u | s
+datatype move = l | ll | r | rr | u | s
 type trip  = move list
 
 (*
@@ -92,10 +92,34 @@ have measured out my life with coffee spoons," laments Prufrock. Coffee?
 Perhaps. Perhaps just ground-up dollar bills filtered through time.
 *)
 
-val alpha = [s, s, s, ll, s, r, s, rr, s, l, s, rr, s, ll, s, s, s]
-val beta  = [s, s, s, rr, s, ll, s, l, s, l, s, rr, s, r, s, l, s, s]
-val gamma = [s, s, s, rr, s, ll, s, r, s, ll, s, l, s, rr, s, s, s]
-val delta = [s, s, s, ll, s, rr, s, r, s, r, s, ll, s, l, s, r, s, s]
+fun invert_trip (t : trip) =
+    case t of
+        [] => []
+      | s ::rest => (invert_trip rest) @ [s ]
+      | l ::rest => (invert_trip rest) @ [r ]
+      | ll::rest => (invert_trip rest) @ [rr]
+      | r ::rest => (invert_trip rest) @ [l ]
+      | rr::rest => (invert_trip rest) @ [ll]
+      | u ::rest => (invert_trip rest) @ [u ]
+
+val alpha  = [s, s, s, ll, s, r, s, rr, s, l, s, rr, s, ll, s, s, s] (* cup *)
+val alpha' = invert_trip alpha
+
+val beta   = List.rev [s, s, s, rr, s, ll, s, l, s, l, s, rr, s, r, s, l, s, s] (* chevron *)
+val beta'  = invert_trip beta
+
+val gamma  = [s, s, s, ll, s, r, s, r, s, r, s, r, s, ll, s, s, s]
+val gamma' = invert_trip gamma
+
+val delta  = [s, s, s, ll, s, r, s, rr, s, ll, s, rr, s, r, s, ll, s, s, s]
+val delta' = invert_trip delta
+
+val omega  = List.rev [s, r, s, ll, s, r, s, rr, s, ll, s, l, s, l, s, rr, s, r, s, l, l, s, rr, s, l, s]
+val omega' = invert_trip omega
+
+val kappa  = [s, l, s, rr, s, l, s, ll, s, r, s, rr, s, ll, s, rr, s, r, s, ll, s, r, s, ll, s, r, s]
+val kappa' = invert_trip kappa
+
 val theta = [s, s, s, s, s, s, s]
 
 (*
@@ -104,24 +128,34 @@ evanescant creatures that we are. Our aisles are labeled: "bread" or "cereal"
 or "career" or "expectations."
 *)
 
+val edges = [omega, omega', omega]
+val current_edge_idx = ref 0
+
+fun next_edge (edge : bool) =
+    ((current_edge_idx := (!current_edge_idx + 1) mod (length edges)) ;
+    if edge then theta else List.nth (edges, !current_edge_idx))
+
 fun make_truss_bottom (width : int) (edge : bool) : trip =
-    let val a' = if edge then theta else alpha ;
-        val b' = if edge then theta else (if (width mod 2) = 2 then beta else delta) ;
-        val c' = if edge then theta else gamma in
     case width of
-        0 => b' @ [ll] @ theta
-      | _ => b' @ [ll] @ alpha @ [rr] @ beta @ [rr] @ gamma @ [ll] @
-             (make_truss_bottom (width - 1) edge)
-    end
+        0 => (next_edge edge) @ [ll] @ (next_edge true)
+      | _ => (next_edge edge)
+           @ [ll]
+           @ (next_edge false)
+           @ [rr]
+           @ (next_edge false)
+           @ [rr]
+           @ (next_edge false)
+           @ [ll]
+           @ (make_truss_bottom (width - 1) edge)
 
 fun make_truss_top (width : int) (edge : bool) : trip =
-    let val a' = if edge then theta else alpha ;
-        val b' = if edge then theta else beta ;
-        val c' = if edge then theta else gamma in
     case width of
-        0 => gamma @ [rr]
-      | _ => c' @ [ll] @ alpha @ [rr] @ (make_truss_top (width - 1) false)
-    end
+        0 => (next_edge false) @ [rr]
+      | _ => (next_edge edge)
+           @ [ll]
+           @ (next_edge false)
+           @ [rr]
+           @ (make_truss_top (width - 1) false)
 
 fun make_truss (width : int) (edge : bool) : trip =
     (make_truss_bottom (width * 2) edge) @ (make_truss_top (width * 2 - 1) true)
@@ -144,11 +178,15 @@ And I worry, I worry that that's all there is, that there is no more room for
 enchantment, that there are no Broadways through life, only the Grid.
 *)
 
-val puzzle = make_triangle 3 ;
+val puzzle = make_triangle 3
 
-print (wrap_svg_all [
+val svg = (wrap_svg_all [
     (wrap_svg_path (svg_of_trip puzzle 3) (10.0, 10.0))
 ] (500, 500))
+
+val fd = TextIO.openOut "triangle3.svg"
+val w = TextIO.output (fd, svg) handle e => (TextIO.closeOut fd; raise e)
+val x = TextIO.closeOut fd
 
 (*
 And thus, this puzzle.
