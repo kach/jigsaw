@@ -17,10 +17,14 @@ plugin here:
 https://github.com/TurnkeyTyranny/laser-gcode-exporter-inkscape-plugin
 
 to generate gcode. You might have to set the "fill" to transparent manually,
-because for whatever reason Inkscape doesn't see the directive in the SVG...
+because for whatever reason Inkscape doesn't see the directive in the SVG.
 
-You can find sample output and a picture of an early prototype in this
-repository. Sadly, the laser didn't cut quite all the way through, so I had to
-use an X-ACTO knife to separate the pieces.
+You can find sample output in this repository, as well as some pictures of my
+successful and unsuccessful attempts to actually manufacture a physical puzzle.
+
+A note on materials: in my experience, wood tends to char and splinter when
+laser cut, making it unsuitable for puzzle pieces. Fiberboard works better,
+with the caveat that if the laser cutter doesn't penetrate all the way through,
+you may need to use an X-ACTO knife to separate the pieces.
 
 Enjoy!
